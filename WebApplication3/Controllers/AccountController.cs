@@ -424,23 +424,13 @@ namespace WebApplication3.Controllers
 
         //GET: Account/FacebookInfo
         [Authorize]
-        public async Task<ActionResult> FacebookInfo()
+        public async Task<Facebook.JsonObject> FacebookInfo()
         {
             var claimsforUser = await UserManager.GetClaimsAsync(User.Identity.GetUserId());
             var access_token = claimsforUser.FirstOrDefault(x => x.Type == "FacebookAccessToken").Value;
             var fb = new FacebookClient(access_token);
-            dynamic myInfo = fb.Get("/me?fields=name,id,email");
-            var friendsList = new List<FacebookViewModel>();
-            foreach (dynamic friend in myInfo.data)
-            {
-                friendsList.Add(new FacebookViewModel()
-                {
-                    Name = friend.name,
-                    ImageURL = @"https://graph.facebook.com/" + friend.id + "/picture?type=large"
-                });
-            }
-
-            return View(friendsList);
+            dynamic myInfo = fb.Get("/me?fields=name,id,email,picture");
+            return myInfo;
         }
 
         private async Task StoreFacebookAuthToken(ApplicationUser user)
