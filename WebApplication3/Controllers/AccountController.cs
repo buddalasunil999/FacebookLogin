@@ -335,7 +335,7 @@ namespace WebApplication3.Controllers
             if (user != null)
             {
                 //Save the FacebookToken in the database if not already there
-                await StoreFacebookAuthToken(user);
+                await StoreFacebookAuthToken(user, loginInfo.Login.LoginProvider);
                 // Sign in the user with this external login provider if the user already has a login
                 var result = await SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
                 return RedirectToLocal(returnUrl);
@@ -392,7 +392,7 @@ namespace WebApplication3.Controllers
                     result = await UserManager.AddLoginAsync(user.Id, info.Login);
                     if (result.Succeeded)
                     {
-                        await StoreFacebookAuthToken(user);
+                        await StoreFacebookAuthToken(user, info.Login.LoginProvider);
                         await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
                         return RedirectToLocal(returnUrl);
                     }
@@ -433,17 +433,20 @@ namespace WebApplication3.Controllers
             return myInfo;
         }
 
-        private async Task StoreFacebookAuthToken(ApplicationUser user)
+        private async Task StoreFacebookAuthToken(ApplicationUser user, string externalProvider)
         {
-            var claimsIdentity = await AuthenticationManager.GetExternalIdentityAsync(DefaultAuthenticationTypes.ExternalCookie);
-            if (claimsIdentity != null)
+            if (externalProvider == "Facebook")
             {
-                // Retrieve the existing claims for the user and add the FacebookAccessTokenClaim
-                var currentClaims = await UserManager.GetClaimsAsync(user.Id);
-                var facebookAccessToken = claimsIdentity.FindAll("FacebookAccessToken").First();
-                if (currentClaims.Count() <= 0)
+                var claimsIdentity = await AuthenticationManager.GetExternalIdentityAsync(DefaultAuthenticationTypes.ExternalCookie);
+                if (claimsIdentity != null)
                 {
-                    await UserManager.AddClaimAsync(user.Id, facebookAccessToken);
+                    // Retrieve the existing claims for the user and add the FacebookAccessTokenClaim
+                    var currentClaims = await UserManager.GetClaimsAsync(user.Id);
+                    var facebookAccessToken = claimsIdentity.FindAll("FacebookAccessToken").First();
+                    if (currentClaims.Count() <= 0)
+                    {
+                        await UserManager.AddClaimAsync(user.Id, facebookAccessToken);
+                    }
                 }
             }
         }

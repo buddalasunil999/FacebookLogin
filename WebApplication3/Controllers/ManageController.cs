@@ -323,23 +323,26 @@ namespace WebApplication3.Controllers
             {
                 var currentUser = await UserManager.FindByIdAsync(User.Identity.GetUserId());
                 //Add the Facebook Claim
-                await StoreFacebookAuthToken(currentUser);
+                await StoreFacebookAuthToken(currentUser, loginInfo.Login.LoginProvider);
                 return RedirectToAction("ManageLogins");
             }
             return RedirectToAction("ManageLogins", new { Message = ManageMessageId.Error });
         }
 
-        private async Task StoreFacebookAuthToken(ApplicationUser user)
+        private async Task StoreFacebookAuthToken(ApplicationUser user, string externalProvider)
         {
-            var claimsIdentity = await AuthenticationManager.GetExternalIdentityAsync(DefaultAuthenticationTypes.ExternalCookie);
-            if (claimsIdentity != null)
+            if (externalProvider == "Facebook")
             {
-                // Retrieve the existing claims for the user and add the FacebookAccessTokenClaim
-                var currentClaims = await UserManager.GetClaimsAsync(user.Id);
-                var facebookAccessToken = claimsIdentity.FindAll("FacebookAccessToken").First();
-                if (currentClaims.Count() <= 0)
+                var claimsIdentity = await AuthenticationManager.GetExternalIdentityAsync(DefaultAuthenticationTypes.ExternalCookie);
+                if (claimsIdentity != null)
                 {
-                    await UserManager.AddClaimAsync(user.Id, facebookAccessToken);
+                    // Retrieve the existing claims for the user and add the FacebookAccessTokenClaim
+                    var currentClaims = await UserManager.GetClaimsAsync(user.Id);
+                    var facebookAccessToken = claimsIdentity.FindAll("FacebookAccessToken").First();
+                    if (currentClaims.Count() <= 0)
+                    {
+                        await UserManager.AddClaimAsync(user.Id, facebookAccessToken);
+                    }
                 }
             }
         }
